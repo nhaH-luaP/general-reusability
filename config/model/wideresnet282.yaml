@@ -1,0 +1,8 @@
+name: wideresnet282
+n_epochs: 200
+learning_rate: 1e-1
+weight_decay: 1e-4
+momentum: 0.9
+nesterov: True
+train_batch_size: 64
+test_batch_size: 128

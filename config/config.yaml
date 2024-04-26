@@ -1,0 +1,29 @@
+defaults:
+  - _self_
+  - model: resnet18
+
+device: cuda
+dataset: cifar10
+num_seeds: 3
+random_seed: 42
+debug: False
+
+al:
+  n_cycles: 9
+  initial_pool_size: 250
+  query_size: 250
+  query_strategy: random
+  log_interval: 20
+
+
+path:
+  output_dir: ./output
+  data_dir: ./data
+  initial_pool_dir: ./storage/initial_pools
+  final_pool_dir: ./storage/final_pools
+  model_dir: ./storage/pretrained_models
+
+
+hydra:
+  run:
+    dir: ${path.output_dir}
