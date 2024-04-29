@@ -28,7 +28,7 @@ seed=${random_seeds[$index / 20]}
 dataset_path=/mnt/stud/work/phahn/datasets/
 initial_pool_dir=/mnt/stud/work/phahn/SDAL/storage/initial_pools/
 final_pool_dir=/mnt/stud/work/phahn/SDAL/storage/final_pools/${model}/${query}/seed_${seed}/
-output_dir=/mnt/stud/work/phahn/SDAL/output/dal/${model}/${query}/seed_${seed}/
+output_dir=/mnt/stud/work/phahn/SDAL/output/dal2/${model}/${query}/seed_${seed}/
 model_dir=/mnt/stud/work/phahn/SDAL/storage/initial_weights/
 
 # Run experiment

@@ -1,7 +1,7 @@
 name: resnet18
 n_epochs: 200
-learning_rate: 1e-1
-weight_decay: 5e-5
+learning_rate: 1e-2
+weight_decay: 5e-4
 momentum: 0.9
 nesterov: True
 train_batch_size: 64
