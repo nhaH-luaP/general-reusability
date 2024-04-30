@@ -25,7 +25,7 @@ def main(args):
 
     # Data and algorithm specific methods
     logging.info(f">>> Initialize Dataset {args.dataset}.")
-    dataset, _, test_dataset, ds_info = build_dataset(args)
+    dataset, _, _, test_dataset, ds_info = build_dataset(args)
     with open(os.path.join(args.path.final_pool_dir,'indices.json'), 'r') as f:
         labeled_indices = json.load(f)
     labeled_dset = Subset(dataset, labeled_indices)

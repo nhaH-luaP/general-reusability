@@ -1,6 +1,5 @@
-'''ResNet in PyTorch.
-
-For Pre-activation ResNet, see 'preact_resnet.py'.
+'''
+ResNet in PyTorch.
 
 Reference:
 [1] Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun
@@ -86,6 +85,7 @@ class ResNet(nn.Module):
         self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
         self.linear = nn.Linear(512*block.expansion, self.num_classes)
+        self.feature_dim = 512*block.expansion
 
     def _make_layer(self, block, planes, num_blocks, stride):
         strides = [stride] + [1]*(num_blocks-1)
@@ -148,12 +148,11 @@ class ResNet(nn.Module):
     def get_grad_representations(self, dataloader, device):
         self.eval()
         self.to(device)
-        feature_dim = 512
 
         embedding = []
         for batch in dataloader:
             inputs = batch[0]
-            embedding_batch = torch.empty([len(inputs), feature_dim * self.num_classes])
+            embedding_batch = torch.empty([len(inputs), self.feature_dim * self.num_classes])
             logits, features = self(inputs.to(device), return_features=True)
             logits = logits.cpu()
             features = features.cpu()
@@ -166,9 +165,9 @@ class ResNet(nn.Module):
             for n in range(len(inputs)):
                 for c in range(self.num_classes):
                     if c == max_indices[n]:
-                        embedding_batch[n, feature_dim * c: feature_dim * (c + 1)] = features[n] * (1 - probas[n, c])
+                        embedding_batch[n, self.feature_dim * c: self.feature_dim * (c + 1)] = features[n] * (1 - probas[n, c])
                     else:
-                        embedding_batch[n, feature_dim * c: feature_dim * (c + 1)] = features[n] * (-1 * probas[n, c])
+                        embedding_batch[n, self.feature_dim * c: self.feature_dim * (c + 1)] = features[n] * (-1 * probas[n, c])
             embedding.append(embedding_batch)
         # Concat all embeddings
         embedding = torch.cat(embedding)
@@ -183,8 +182,8 @@ def ResNet18(n_classes=10):
 
 
 def ResNet34(n_classes=10):
-    return ResNet(BasicBlock, [3, 4, 6, 3])
+    return ResNet(BasicBlock, [3, 4, 6, 3], n_classes=n_classes)
 
 
 def ResNet50(n_classes=10):
-    return ResNet(Bottleneck, [3, 4, 6, 3])
+    return ResNet(Bottleneck, [3, 4, 6, 3], n_classes=n_classes)

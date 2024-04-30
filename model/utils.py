@@ -1,5 +1,7 @@
 import torch
 
+
+
 @torch.inference_mode()
 def accuracy(output, target, topk=(1,)):
     """Computes the accuracy over the k top predictions for the specified values of k"""
@@ -18,7 +20,9 @@ def accuracy(output, target, topk=(1,)):
         res.append(correct_k * (100.0 / batch_size))
     return res
 
-def train_one_epoch(labeled_trainloader, model, optimizer, criterion, device='cuda'):
+
+
+def train_one_epoch(labeled_trainloader, model, optimizer, criterion, device='cuda', epoch=None, n_train_iterations=None, unlabeled_trainloader=None, T=1.0, alpha=0.9, print_freq=None, lr_scheduler=None):
     model.to(device)
     model.train()
     n_samples, n_correct, total_loss = 0, 0, 0
@@ -41,6 +45,7 @@ def train_one_epoch(labeled_trainloader, model, optimizer, criterion, device='cu
         "acc1": 0 if n_samples == 0 else n_correct/n_samples*100,
         "total_loss": 0 if n_samples == 0 else total_loss/n_samples
     }
+
 
 
 @torch.no_grad()

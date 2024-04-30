@@ -6,7 +6,6 @@ device: cuda
 dataset: cifar10
 num_seeds: 3
 random_seed: 42
-debug: False
 
 al:
   n_cycles: 9
@@ -15,6 +14,17 @@ al:
   query_strategy: random
   log_interval: 20
 
+ssl:
+  use: False
+  rampup_length: 50
+  lambda_u: 50
+  alpha: 0.5
+  T: 0.75
+  n_train_iterations: 100
+
+pretrain:
+  use: False
+  projection_dim: 128
 
 path:
   output_dir: ./output

@@ -31,7 +31,7 @@ def main(args):
     
     # Initialize Dataset
     logging.info(f">>> Initialize Dataset {args.dataset}.")
-    dataset, query_dataset, test_dataset, ds_info = build_dataset(args)
+    dataset, mixmatch_dataset, query_dataset, test_dataset, ds_info = build_dataset(args)
 
     # Initialize Model
     logging.info(f">>> Initialize Model {args.model.name}.")
@@ -91,6 +91,7 @@ def main(args):
 
         # Update dataset
         labeled_dset = Subset(dataset, labeled_indices)
+        unlabeled_dset = Subset(mixmatch_dataset, unlabeled_indices)
 
         # Reset Model, Optimizer and Lr Scheduler
         model.load_state_dict(initial_model_state)
@@ -100,13 +101,16 @@ def main(args):
         # Create DataLoaders
         logging.info("[Cycle "+str(i_cycle)+"] Training Model.")
         labeled_train_loader = DataLoader(labeled_dset, batch_size=args.model.train_batch_size, drop_last=(args.model.train_batch_size < len(labeled_indices)), shuffle=True)
+        unlabeled_train_loader = DataLoader(unlabeled_dset, batch_size=args.model.train_batch_size, drop_last=(args.model.train_batch_size < len(labeled_indices)), shuffle=True)
         test_loader = DataLoader(test_dataset, batch_size=args.model.test_batch_size)
         
         # Train model
         train_history = []
         t1 = time.time()
         for i_epoch in range(args.model.n_epochs):
-            train_stats = train(labeled_trainloader=labeled_train_loader, model=model, optimizer=optimizer, criterion=train_criterion, device=args.device)
+            train_stats = train(labeled_trainloader=labeled_train_loader, unlabeled_trainloader=unlabeled_train_loader, model=model,
+                                optimizer=optimizer, criterion=train_criterion, epoch=i_epoch, n_train_iterations=args.ssl.n_train_iterations, device=args.device,
+                                T=args.ssl.T, alpha=args.ssl.alpha)
             train_history.append(train_stats)
             lr_scheduler.step()
             if i_epoch % args.al.log_interval == 0 or i_epoch == args.model.n_epochs - 1:
