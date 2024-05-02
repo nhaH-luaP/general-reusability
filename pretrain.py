@@ -55,7 +55,7 @@ def main(args):
         if i_epoch % args.pretrain.val_step_size or i_epoch == args.pretrain.n_epochs -1:
             # Validation Step (Same Loss on a hold out validation split)
             val_stats = evaluate(model=model, dataloader=valloader, criterion=criterion, device=args.device)
-            logging.info(f"[Epoch {i_epoch}][Test-Results    ] "+str(val_stats))
+            logging.info(f"[Epoch {i_epoch}][Validation-Results] "+str(val_stats))
             avg_val_loss = val_stats['loss']
 
             # Save the model with the lowest val loss on its prediction task

@@ -190,6 +190,7 @@ class ResNet6(nn.Module):
         super(ResNet6, self).__init__()
         self.in_planes = 6
         self.feature_dim = 32
+        self.n_classes = n_classes
 
         self.conv1 = nn.Conv2d(3, 6, kernel_size=5)
         self.bn1 = nn.BatchNorm2d(6)
@@ -248,7 +249,7 @@ class ResNet6(nn.Module):
         embedding = []
         for batch in dataloader:
             inputs = batch[0]
-            embedding_batch = torch.empty([len(inputs), self.feature_dim * self.num_classes])
+            embedding_batch = torch.empty([len(inputs), self.feature_dim * self.n_classes])
             logits, features = self(inputs.to(device), return_features=True)
             logits = logits.cpu()
             features = features.cpu()
@@ -259,7 +260,7 @@ class ResNet6(nn.Module):
             # TODO: optimize code
             # for each sample in a batch and for each class, compute the gradient wrt to weights
             for n in range(len(inputs)):
-                for c in range(self.num_classes):
+                for c in range(self.n_classes):
                     if c == max_indices[n]:
                         embedding_batch[n, self.feature_dim * c: self.feature_dim * (c + 1)] = features[n] * (1 - probas[n, c])
                     else:
@@ -268,7 +269,8 @@ class ResNet6(nn.Module):
         # Concat all embeddings
         embedding = torch.cat(embedding)
         return embedding
-    
+
+
 def MiniResNet(n_classes=10):
     return ResNet(MiniBasicBlock, [1, 1, 1, 1], n_classes=n_classes)
 
