@@ -10,6 +10,30 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+class MiniBasicBlock(nn.Module):
+    expansion = 1
+
+    def __init__(self, in_planes, planes, stride=1):
+        super(MiniBasicBlock, self).__init__()
+        self.conv1 = nn.Conv2d(
+            in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(planes)
+
+        self.shortcut = nn.Sequential()
+        if stride != 1 or in_planes != self.expansion*planes:
+            self.shortcut = nn.Sequential(
+                nn.Conv2d(in_planes, self.expansion*planes,
+                          kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(self.expansion*planes)
+            )
+
+    def forward(self, x):
+        out = self.bn1(self.conv1(x))
+        out += self.shortcut(x)
+        out = F.relu(out)
+        return out
+
+
 class BasicBlock(nn.Module):
     expansion = 1
 
@@ -172,7 +196,12 @@ class ResNet(nn.Module):
         # Concat all embeddings
         embedding = torch.cat(embedding)
         return embedding
-    
+
+
+def MiniResNet(n_classes=10):
+    return ResNet(MiniBasicBlock, [1, 1, 1, 1], n_classes=n_classes)
+
+
 def ResNet10(n_classes=10):
     return ResNet(BasicBlock, [1, 1, 1, 1], n_classes=n_classes)
 
