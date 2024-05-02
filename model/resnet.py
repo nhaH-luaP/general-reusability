@@ -154,16 +154,83 @@ class ResNet(nn.Module):
             all_logits.append(logits.cpu())
         logits = torch.cat(all_logits)
         return logits
-    
+
     @torch.inference_mode()
-    def get_ssl_logits(self, dataloader, device):
+    def get_grad_representations(self, dataloader, device):
+        self.eval()
+        self.to(device)
+
+        embedding = []
+        for batch in dataloader:
+            inputs = batch[0]
+            embedding_batch = torch.empty([len(inputs), self.feature_dim * self.num_classes])
+            logits, features = self(inputs.to(device), return_features=True)
+            logits = logits.cpu()
+            features = features.cpu()
+
+            probas = logits.softmax(-1)
+            max_indices = probas.argmax(-1)
+
+            # TODO: optimize code
+            # for each sample in a batch and for each class, compute the gradient wrt to weights
+            for n in range(len(inputs)):
+                for c in range(self.num_classes):
+                    if c == max_indices[n]:
+                        embedding_batch[n, self.feature_dim * c: self.feature_dim * (c + 1)] = features[n] * (1 - probas[n, c])
+                    else:
+                        embedding_batch[n, self.feature_dim * c: self.feature_dim * (c + 1)] = features[n] * (-1 * probas[n, c])
+            embedding.append(embedding_batch)
+        # Concat all embeddings
+        embedding = torch.cat(embedding)
+        return embedding
+    
+
+class ResNet6(nn.Module):
+    def __init__(self, num_classes=10):
+        super(ResNet6, self).__init__()
+        self.in_planes = 6
+
+        self.conv1 = nn.Conv2d(3, 6, kernel_size=5)
+        self.bn1 = nn.BatchNorm2d(6)
+        self.layer1 = self._make_layer(BasicBlock, 16, 1, stride=2)
+        self.layer2 = self._make_layer(BasicBlock, 32, 1, stride=2)
+        self.linear = nn.Linear(32, num_classes)
+
+    def _make_layer(self, block, planes, num_blocks, stride):
+        strides = [stride] + [1]*(num_blocks-1)
+        layers = []
+        for stride in strides:
+            layers.append(block(self.in_planes, planes, stride))
+            self.in_planes = planes * block.expansion
+        return nn.Sequential(*layers)
+
+    def forward(self, x):
+        out = F.relu(self.bn1(self.conv1(x)))
+        out = self.layer1(out)
+        out = self.layer2(out)
+        out = F.avg_pool2d(out, 4)
+        out = out.view(out.size(0), -1)
+        out = self.linear(out)
+        return out
+
+    @torch.inference_mode()
+    def get_representations(self, dataloader, device):
+        self.to(device)
+        self.eval()
+        all_features = []
+        for samples, _ in dataloader:
+            _, features = self(samples.to(device), return_features=True)
+            all_features.append(features.cpu())
+        features = torch.cat(all_features)
+        return features
+
+    @torch.inference_mode()
+    def get_logits(self, dataloader, device):
         self.to(device)
         self.eval()
         all_logits = []
-        for (inputs_u, inputs_u2), _ in dataloader:
-            logits_1 = self(inputs_u.to(device))
-            logits_2 = self(inputs_u2.to(device))
-            logits = torch.stack((logits_1, logits_2), dim=1)
+        for samples, _ in dataloader:
+            logits = self(samples.to(device))
             all_logits.append(logits.cpu())
         logits = torch.cat(all_logits)
         return logits

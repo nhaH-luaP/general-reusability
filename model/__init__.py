@@ -1,4 +1,4 @@
-from model.resnet import MiniResNet, ResNet10, ResNet18, ResNet34, ResNet50
+from model.resnet import MiniResNet, ResNet6, ResNet10, ResNet18, ResNet34, ResNet50
 from model.wideresnet import WideResnet282, WideResnet2810
 from model.utils import train_one_epoch, evaluate
 from model.mixmatch import train_one_epoch_mixmatch, SemiLoss
@@ -10,6 +10,8 @@ import torch
 def build_model(args, ds_info):
     if args.model.name == 'miniresnet':
         model = MiniResNet(n_classes=ds_info['n_classes'])
+    elif args.model.name == 'ResNet6':
+        model = ResNet6(n_classes=ds_info['n_classes'])
     elif args.model.name == 'resnet10':
         model = ResNet10(n_classes=ds_info['n_classes'])
     elif args.model.name == 'resnet18':
