@@ -189,12 +189,14 @@ class ResNet6(nn.Module):
     def __init__(self, num_classes=10):
         super(ResNet6, self).__init__()
         self.in_planes = 6
+        self.feature_dim = 32
 
         self.conv1 = nn.Conv2d(3, 6, kernel_size=5)
         self.bn1 = nn.BatchNorm2d(6)
         self.layer1 = self._make_layer(BasicBlock, 16, 1, stride=2)
         self.layer2 = self._make_layer(BasicBlock, 32, 1, stride=2)
-        self.linear = nn.Linear(32, num_classes)
+        self.linear = nn.Linear(self.feature_dim, num_classes)
+        
 
     def _make_layer(self, block, planes, num_blocks, stride):
         strides = [stride] + [1]*(num_blocks-1)
@@ -204,13 +206,16 @@ class ResNet6(nn.Module):
             self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+    def forward(self, x, return_features=False):
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.layer1(out)
         out = self.layer2(out)
         out = F.avg_pool2d(out, 4)
         out = out.view(out.size(0), -1)
+        features = out
         out = self.linear(out)
+        if return_features:
+            out = (out, features)
         return out
 
     @torch.inference_mode()

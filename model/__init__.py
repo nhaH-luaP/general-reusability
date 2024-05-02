@@ -10,7 +10,7 @@ import torch
 def build_model(args, ds_info):
     if args.model.name == 'miniresnet':
         model = MiniResNet(n_classes=ds_info['n_classes'])
-    elif args.model.name == 'ResNet6':
+    elif args.model.name == 'resnet6':
         model = ResNet6(n_classes=ds_info['n_classes'])
     elif args.model.name == 'resnet10':
         model = ResNet10(n_classes=ds_info['n_classes'])
