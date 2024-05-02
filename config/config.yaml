@@ -25,6 +25,12 @@ ssl:
 pretrain:
   use: False
   projection_dim: 128
+  val_split_size: 2500
+  batch_size: 256
+  n_epochs: 500
+  learning_rate: 1e-2
+  weight_decay: 5e-4
+  val_step_size: 5
 
 path:
   output_dir: ./output

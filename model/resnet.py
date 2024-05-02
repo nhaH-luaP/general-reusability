@@ -268,8 +268,7 @@ class ResNet6(nn.Module):
         # Concat all embeddings
         embedding = torch.cat(embedding)
         return embedding
-
-
+    
 def MiniResNet(n_classes=10):
     return ResNet(MiniBasicBlock, [1, 1, 1, 1], n_classes=n_classes)
 

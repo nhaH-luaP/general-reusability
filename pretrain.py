@@ -1,5 +1,5 @@
 from dataset import build_pretrain_dataset
-from model.resnet import ResNet10, ResNet18, ResNet34, ResNet50
+from model.resnet import ResNet6, ResNet10, ResNet18, ResNet34, ResNet50
 from model.simclr import train_one_epoch, evaluate, InfoNCELoss
 from utils import seed_everything
 
@@ -36,35 +36,37 @@ def main(args):
     train_indices = [i for i in range(len(dataset)) if i not in val_indices]
     trainset = Subset(dataset=dataset, indices=train_indices)
     valset = Subset(dataset=dataset, indices=val_indices)
-    trainloader = DataLoader(trainset, batch_size=args.pretrain.train_batch_size, shuffle=True)
-    valloader = DataLoader(valset, batch_size=args.pretrain.test_batch_size, shuffle=False)
+    trainloader = DataLoader(trainset, batch_size=args.pretrain.batch_size, shuffle=True)
+    valloader = DataLoader(valset, batch_size=args.pretrain.batch_size, shuffle=False)
 
     # Model (criterion was already build based on algorithm)
     logging.info("[Setup] Building Model.")
-    model, optimizer, lr_scheduler, criterion = build_model(args, ds_info=ds_info)
-    
+    model, optimizer, lr_scheduler, criterion = build_model(args, n_classes=ds_info['n_classes'])
 
     logging.info("[Setup] Begin Pretraining.")
     history = []
     best_avg_val_loss = None
-    for i_epoch in range(args.pretrain.n_epochs if not args.debug else 5):
+    for i_epoch in range(args.pretrain.n_epochs):
         # Train Step
         train_stats = train_one_epoch(model=model, dataloader=trainloader, optimizer=optimizer, criterion=criterion, device=args.device)
         lr_scheduler.step()
         logging.info(f"[Epoch {i_epoch}][Training-Results] "+str(train_stats))
 
-        # Validation Step (Same Loss on a hold out validation split)
-        val_stats = evaluate(model=model, dataloader=valloader, criterion=criterion, device=args.device)
-        logging.info(f"[Epoch {i_epoch}][Test-Results    ] "+str(val_stats))
-        avg_val_loss = val_stats['loss']
+        if i_epoch % args.pretrain.val_step_size or i_epoch == args.pretrain.n_epochs -1:
+            # Validation Step (Same Loss on a hold out validation split)
+            val_stats = evaluate(model=model, dataloader=valloader, criterion=criterion, device=args.device)
+            logging.info(f"[Epoch {i_epoch}][Test-Results    ] "+str(val_stats))
+            avg_val_loss = val_stats['loss']
 
-        # Save the model with the lowest val loss on its prediction task
-        if not best_avg_val_loss or avg_val_loss < best_avg_val_loss:
-            logging.info(f"[Epoch {i_epoch}][Model Update    ] Saving new best Model with an average validation loss of {avg_val_loss}.")
-            best_avg_val_loss = avg_val_loss
-            backbone = reverse_model_change(model=model, algorithm=args.pretrain.algorithm, model_name=args.model.name, ds_info=ds_info)
-            state_dict = backbone.state_dict()
-            torch.save(state_dict, os.path.join(args.path.model_dir, args.model.name+"_"+str(args.random_seed)+".pth"))
+            # Save the model with the lowest val loss on its prediction task
+            if not best_avg_val_loss or avg_val_loss < best_avg_val_loss:
+                logging.info(f"[Epoch {i_epoch}][Model Update    ] Saving new best Model with an average validation loss of {avg_val_loss}.")
+                best_avg_val_loss = avg_val_loss
+                backbone = reverse_model_change(model=model, n_classes=ds_info['n_classes'])
+                state_dict = backbone.state_dict()
+                torch.save(state_dict, os.path.join(args.path.model_dir, args.model.name+"_"+str(args.random_seed)+".pth"))
+        else:
+            val_stats = {}
 
         # Save Metrics for this epoch
         history.append({
@@ -82,13 +84,15 @@ def main(args):
 
 def build_model(args, n_classes):
     # Build the base model
-    if args.model.name == 'ResNet10':
+    if args.model.name == 'resnet6':
+        model = ResNet6(n_classes=n_classes)
+    if args.model.name == 'resnet10':
         model = ResNet10(n_classes=n_classes)
-    elif args.model.name == 'ResNet18':
+    elif args.model.name == 'resnet18':
         model = ResNet18(n_classes=n_classes)
-    elif args.model.name == 'ResNet34':
+    elif args.model.name == 'resnet34':
         model = ResNet34(n_classes=n_classes)
-    elif args.model.name == 'ResNet50':
+    elif args.model.name == 'resnet50':
         model = ResNet50(n_classes=n_classes)
     else:
         AssertionError(f"Model {args.model.name} not implemented!")
