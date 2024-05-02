@@ -186,7 +186,7 @@ class ResNet(nn.Module):
     
 
 class ResNet6(nn.Module):
-    def __init__(self, num_classes=10):
+    def __init__(self, n_classes=10):
         super(ResNet6, self).__init__()
         self.in_planes = 6
         self.feature_dim = 32
@@ -195,7 +195,7 @@ class ResNet6(nn.Module):
         self.bn1 = nn.BatchNorm2d(6)
         self.layer1 = self._make_layer(BasicBlock, 16, 1, stride=2)
         self.layer2 = self._make_layer(BasicBlock, 32, 1, stride=2)
-        self.linear = nn.Linear(self.feature_dim, num_classes)
+        self.linear = nn.Linear(self.feature_dim, n_classes)
         
 
     def _make_layer(self, block, planes, num_blocks, stride):
