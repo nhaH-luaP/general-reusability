@@ -34,14 +34,16 @@ def main(args):
     dataset, mixmatch_dataset, query_dataset, test_dataset, ds_info = build_dataset(args)
 
     # Initialize Model
-    # TODO: Include loading pretrained weights
     logging.info(f">>> Initialize Model {args.model.name}.")
     model, optimizer, lr_scheduler, train, train_criterion, eval, eval_criterion = build_model(args, ds_info=ds_info)
-    model_weights_path = os.path.join(args.path.model_dir, args.model.name+"_"+str(args.random_seed)+".pth")
-    logging.info(f"Loading deterministically initialized weights from {model_weights_path}!")
-    if os.path.exists(model_weights_path):
-        model.load_state_dict(torch.load(model_weights_path))
-        logging.info("Loading successfull!")
+    random_weights_path = os.path.join(args.path.model_dir, 'random', args.model.name+"_"+str(args.random_seed)+".pth")
+    pretrained_weights_path = os.path.join(args.path.model_dir, 'pretrained', args.model.name+"_"+str(args.random_seed)+".pth")
+    if args.pretrain.use and os.path.exists(pretrained_weights_path):
+        model.load_state_dict(torch.load(pretrained_weights_path))
+        logging.info(f"Loading pretrained weights from {pretrained_weights_path}!")
+    elif os.path.exists(random_weights_path):
+        model.load_state_dict(torch.load(random_weights_path))
+        logging.info(f"Loading deterministically initialized weights from {random_weights_path}!")
     else:
         logging.info(f"ERROR! No weights available! Model weights are randomly initialized. Be aware of random differences between different GPUs!")
 
