@@ -23,12 +23,14 @@ def main(args):
     # Enable Reproducability
     seed_everything(args.random_seed)
 
-    # Data and algorithm specific methods
+    # Initialize Dataset and load final labeled pool from previous DAL experiment
     logging.info(f">>> Initialize Dataset {args.dataset}.")
-    dataset, _, _, test_dataset, ds_info = build_dataset(args)
+    dataset, mixmatch_dataset, _, test_dataset, ds_info = build_dataset(args)
     with open(os.path.join(args.path.final_pool_dir,'indices.json'), 'r') as f:
         labeled_indices = json.load(f)
+    unlabeled_indices = [i for i in range(ds_info['n_samples']) if i not in labeled_indices]
     labeled_dset = Subset(dataset, labeled_indices)
+    unlabeled_dset = Subset(mixmatch_dataset, unlabeled_indices)
 
     # Initialize Model
     logging.info(f">>> Initialize Model {args.model.name}.")
@@ -44,16 +46,18 @@ def main(args):
     else:
         logging.info(f"ERROR! No weights available! Model weights are randomly initialized. Be aware of random differences between different GPUs!")
             
-
     # Train Model
     logging.info("[Setup] Training Model.")
     labeled_train_loader = DataLoader(labeled_dset, batch_size=args.model.train_batch_size, drop_last=(args.model.train_batch_size < len(labeled_indices)), shuffle=True)
+    unlabeled_train_loader = DataLoader(unlabeled_dset, batch_size=args.model.train_batch_size, drop_last=(args.model.train_batch_size < len(labeled_indices)), shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=args.model.test_batch_size)
     
     train_history = []
     t1 = time.time()
     for i_epoch in range(args.model.n_epochs):
-        train_stats = train(labeled_trainloader=labeled_train_loader, model=model, optimizer=optimizer, lr_scheduler=lr_scheduler, criterion=train_criterion, device=args.device)
+        train_stats = train(labeled_trainloader=labeled_train_loader, unlabeled_trainloader=unlabeled_train_loader, model=model,
+                                optimizer=optimizer, criterion=train_criterion, epoch=i_epoch, n_train_iterations=args.ssl.n_train_iterations, device=args.device,
+                                T=args.ssl.T, alpha=args.ssl.alpha)
         train_history.append(train_stats)
         lr_scheduler.step()
         logging.info(f"[Epoch {i_epoch}][Train Stats] {train_stats}")
