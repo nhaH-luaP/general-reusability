@@ -26,15 +26,15 @@ query_model=${models[$index % 3]}
 s=${ssl[$index / 3 % 2]}
 p=${pre[$index / 6 % 2]}
 query=${queries[$index / 12 % 5]}
-eval_model=${models[$index % 60 / 3]}
-eval_s=${ssl[$index / 180 % 2]}
-eval_p=${pre[$index / 360 % 2]}
-seed=${random_seeds[$index / 720]}
+eval_model=wideresnet2810
+eval_s=${ssl[$index / 60 % 2]}
+eval_p=${pre[$index / 120 % 2]}
+seed=${random_seeds[$index / 240]}
 
 # Predefine certain paths
 dataset_path=/mnt/stud/work/phahn/datasets/
 final_pool_dir=/mnt/stud/work/phahn/SDAL/storage/final_pools/${model}/${query}/ssl_${s}/pre_${p}/seed_${seed}/
-output_dir=/mnt/stud/work/phahn/SDAL/output/eval_reu/${query_model}/${query}/ssl_${s}/pre_${p}/seed_${seed}/${eval_model}/ssl_${eval_s}/pre_${eval_p}/
+output_dir=/mnt/stud/work/phahn/SDAL/output/eval_fut/${query_model}/${query}/ssl_${s}/pre_${p}/seed_${seed}/${eval_model}/ssl_${eval_s}/pre_${eval_p}/
 model_dir=/mnt/stud/work/phahn/SDAL/storage/initial_weights/
 
 # Run experiment
