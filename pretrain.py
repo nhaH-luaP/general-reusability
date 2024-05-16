@@ -1,5 +1,6 @@
 from dataset import build_pretrain_dataset
 from model.resnet import ResNet6, ResNet10, ResNet18, ResNet34, ResNet50
+from model.wideresnet import WideResnet282, WideResnet2810
 from model.simclr import train_one_epoch, evaluate, InfoNCELoss
 from utils import seed_everything
 
@@ -94,8 +95,12 @@ def build_model(args, n_classes):
         model = ResNet34(n_classes=n_classes)
     elif args.model.name == 'resnet50':
         model = ResNet50(n_classes=n_classes)
+    elif args.model.name == 'wideresnet282':
+        model = WideResnet282(n_classes=n_classes)
+    elif args.model.name == 'wideresnet2810':
+        model = WideResnet2810(n_classes=n_classes)
     else:
-        AssertionError(f"Model {args.model.name} not implemented!")
+        raise AssertionError(f"Model {args.model.name} not implemented!")
 
     # Change Model according to SimCLR algorithm
     input_dim = model.feature_dim

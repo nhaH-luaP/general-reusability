@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=16
 #SBATCH --ntasks=1
 #SBATCH --mem=128GB
-#SBATCH --array=0-2%4
+#SBATCH --array=0-5%4
 #SBATCH --output=/mnt/stud/work/phahn/SDAL/logs/pre/%A_%a_%x.out
 
 # Active Environment, change to directory and print certain infos
@@ -14,7 +14,7 @@ source /mnt/stud/work/phahn/venvs/sdal/bin/activate
 cd /mnt/stud/work/phahn/SDAL/SDAL
 
 # Create tupel of variables
-models=(wideresnet2810)
+models=(wideresnet2810 wideresnet282)
 random_seeds=(1 2 3)
 
 # Get the current task index from the job array and select instances of variables based on it
