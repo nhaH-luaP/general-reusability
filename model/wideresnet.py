@@ -60,12 +60,14 @@ class WideResNet(nn.Module):
         self.depth = depth
         self.widen_factor = widen_factor
         self.num_classes = num_classes
+        
 
         assert ((self.depth - 4) % 6 == 0), 'Wide-resnet depth should be 6n+4'
         n = (self.depth - 4) / 6
         k = self.widen_factor
 
         nStages = [16, 16 * k, 32 * k, 64 * k]
+        self.feature_dim = nStages[3]
 
         if imagenethead:
             self.conv1 = nn.Conv2d(3, nStages[0], kernel_size=21, stride=7, padding=7, bias=True) # TODO (ynagel) Find out, what the actual combination is
@@ -157,12 +159,11 @@ class WideResNet(nn.Module):
     def get_grad_representations(self, dataloader, device):
         self.eval()
         self.to(device)
-        feature_dim = 640
 
         embedding = []
         for batch in dataloader:
             inputs = batch[0]
-            embedding_batch = torch.empty([len(inputs), feature_dim * self.num_classes])
+            embedding_batch = torch.empty([len(inputs), self.feature_dim * self.num_classes])
             logits, features = self(inputs.to(device), return_features=True)
             logits = logits.cpu()
             features = features.cpu()
@@ -175,9 +176,9 @@ class WideResNet(nn.Module):
             for n in range(len(inputs)):
                 for c in range(self.num_classes):
                     if c == max_indices[n]:
-                        embedding_batch[n, feature_dim * c: feature_dim * (c + 1)] = features[n] * (1 - probas[n, c])
+                        embedding_batch[n, self.feature_dim * c: self.feature_dim * (c + 1)] = features[n] * (1 - probas[n, c])
                     else:
-                        embedding_batch[n, feature_dim * c: feature_dim * (c + 1)] = features[n] * (-1 * probas[n, c])
+                        embedding_batch[n, self.feature_dim * c: self.feature_dim * (c + 1)] = features[n] * (-1 * probas[n, c])
             embedding.append(embedding_batch)
         # Concat all embeddings
         embedding = torch.cat(embedding)
