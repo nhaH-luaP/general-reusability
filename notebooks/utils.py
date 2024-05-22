@@ -6,9 +6,13 @@ def plot_conf(conf, labels, vmax, fig, ax, idx=0, headers=None, colorbar=False):
     # Plot conf matrix
     conf = np.array(conf)
     avg_conf = np.array([[conf[i][j] for i in range(conf.shape[0]) if i != j] for j in range(conf.shape[1])])
-    avg_conf = np.array([int(i) for i in np.mean(avg_conf, axis=1)]).reshape(1,-1)
+    avg_conf = np.array([i for i in np.mean(avg_conf, axis=1)]).reshape(1,-1)
 
-    im = ax[0][idx].imshow(conf, vmin=0, vmax=vmax)
+    # Normalize matrix
+    conf = conf/vmax
+    avg_conf = avg_conf/vmax
+
+    im = ax[0][idx].imshow(conf, vmin=0, vmax=1)
     if colorbar:
         fig.colorbar(im, orientation='vertical')
 
@@ -30,13 +34,13 @@ def plot_conf(conf, labels, vmax, fig, ax, idx=0, headers=None, colorbar=False):
     # Loop over data dimensions and create text annotations.
     for i in range(len(labels)):
         for j in range(len(labels)):
-            text = ax[0][idx].text(j, i, conf[i, j] if i != j else "0", size=11,
+            text = ax[0][idx].text(j, i, round(conf[i, j],2) if i != j else "0", size=11,
                         ha="center", va="center", color="w")
 
     # Average Below
-    ax[1][idx].imshow(avg_conf, vmin=0, vmax=vmax)
+    ax[1][idx].imshow(avg_conf, vmin=0, vmax=1)
     for j in range(len(labels)):
-        text = ax[1][idx].text(j, 0, avg_conf[0, j], size=11,
+        text = ax[1][idx].text(j, 0, round(avg_conf[0, j],2), size=11,
                         ha="center", va="center", color="w")
 
     ax[1][idx].tick_params(left = False, right = False , labelleft = False , 
